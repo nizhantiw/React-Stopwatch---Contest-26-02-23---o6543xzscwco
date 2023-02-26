@@ -8,30 +8,46 @@ const App = () => {
   const [laps, setLaps] = useState([]);
   const [lapsAdded, setLapsAdded] = useState(false);
 
-  const formatTime = (time) => {
-    const ms = `00${(time % 1000)}`.slice(-3);
-    const s = `0${Math.floor(time / 1000) % 60}`.slice(-2);
-    const m = `0${Math.floor(time / (1000 * 60)) % 60}`.slice(-2);
-    const h = `0${Math.floor(time / (1000 * 60 * 60))}`.slice(-2);
-    return `${h}:${m}:${s}.${ms}`;
-  };
+const formatTime = (time) => {
+  if (isNaN(time)) {
+    return '00:00:00.000';
+  }
+  const ms = `00${(time % 1000)}`.slice(-3);
+  const s = `0${Math.floor(time / 1000) % 60}`.slice(-2);
+  const m = `0${Math.floor(time / (1000 * 60)) % 60}`.slice(-2);
+  const h = `0${Math.floor(time / (1000 * 60 * 60))}`.slice(-2);
+  return `${h}:${m}:${s}.${ms}`;
+};
+
+
 
   const handleStart = () => {
-    startTime.current = Date.now() - currentTime;
-    intervalRef.current = setInterval(() => {
-      setCurrentTime(Date.now() - startTime.current);
-    }, 10);
-  };
+  startTime.current = Date.now() - currentTime;
+  intervalRef.current = setInterval(() => {
+    const newTime = Date.now() - startTime.current;
+    setCurrentTime(newTime);
+    if (lapsAdded) {
+      setLaps((laps) => [
+        ...laps.slice(0, laps.length - 1),
+        formatTime(newTime - laps.reduce((total, lap) => total + parseTime(lap), 0)),
+        formatTime(newTime),
+      ]);
+    }
+  }, 10);
+};
 
   const handleStop = () => {
     clearInterval(intervalRef.current);
   };
 
-  const handleLap = () => {
-    const lapTime = formatTime(currentTime);
-    setLaps((laps) => [...laps, lapTime]);
+ const handleLap = () => {
+  const lapTime = formatTime(currentTime);
+  if (!lapsAdded) {
     setLapsAdded(true);
-  };
+  }
+  setLaps((laps) => [...laps, lapTime]);
+};
+
 
   const handleReset = () => {
     clearInterval(intervalRef.current);
